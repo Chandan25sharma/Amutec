@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useDropzone } from 'react-dropzone'
 import { FileText, Upload, Download, Minimize2, AlertCircle, CheckCircle } from 'lucide-react'
-
+import Image from 'next/image'
 export default function CompressPDFPage() {
   const [file, setFile] = useState<File | null>(null)
   const [compressionLevel, setCompressionLevel] = useState<'low' | 'medium' | 'high'>('medium')
@@ -120,7 +120,7 @@ export default function CompressPDFPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
+              <Image src="/icon.png" alt="File Icon" width={62} height={82}  className="object-contain" />
               <span className="text-2xl font-bold text-gray-900">Amutec</span>
             </Link>
             <nav className="hidden md:flex space-x-8">

@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useDropzone } from 'react-dropzone'
+import Image from 'next/image'
 import { 
   FileText, 
   Upload, 
@@ -148,7 +149,7 @@ export default function ConvertPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
+              <Image src="/icon.png" alt="File Icon" width={62} height={82}  className="object-contain" />
               <span className="text-2xl font-bold text-gray-900">Amutec</span>
             </Link>
             <nav className="hidden md:flex space-x-8">
