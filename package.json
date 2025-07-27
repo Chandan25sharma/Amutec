@@ -2,6 +2,22 @@
   "name": "nre-forcasting",
   "version": "0.1.0",
   "private": true,
+  "description": "A comprehensive web application built with Next.js 15 that provides professional PDF editing tools, file conversion capabilities, and AI-powered resume analysis with career advice.",
+  "homepage": "https://github.com/Chandan25sharma/Amutec#readme",
+  "bugs": {
+    "url": "https://github.com/Chandan25sharma/Amutec/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chandan25sharma/Amutec.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   FileText, 
   Merge, 
@@ -13,7 +14,11 @@ import {
   Users,
   Brain,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Layout,
+  Wrench,
+  ShieldCheck,
+  PenTool
 } from 'lucide-react'
 
 const tools = [
@@ -58,6 +63,34 @@ const tools = [
     icon: Brain,
     href: '/tools/resume-analyzer',
     color: 'text-indigo-600'
+  },
+  {
+    title: 'Organize Pages',
+    description: 'Reorder, rotate, and delete PDF pages',
+    icon: Layout,
+    href: '/tools/organize',
+    color: 'text-indigo-600'
+  },
+  {
+    title: 'Repair PDF',
+    description: 'Fix corrupted or damaged PDF files',
+    icon: Wrench,
+    href: '/tools/repair',
+    color: 'text-red-600'
+  },
+  {
+    title: 'Watermark & Security',
+    description: 'Add watermarks and password protection',
+    icon: ShieldCheck,
+    href: '/tools/watermark',
+    color: 'text-purple-600'
+  },
+  {
+    title: 'Annotate PDF',
+    description: 'Add text, highlights, and shapes',
+    icon: PenTool,
+    href: '/tools/annotate',
+    color: 'text-green-600'
   }
 ]
 
@@ -92,7 +125,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
+              <Image src="/icon.png" alt="File Icon" width={62} height={82}  className="object-contain" />
               <span className="text-2xl font-bold text-gray-900">Amutec</span>
             </div>
             <nav className="hidden md:flex space-x-8">

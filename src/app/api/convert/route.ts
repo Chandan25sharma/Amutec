@@ -4,7 +4,7 @@ import { FileConverter } from '@/lib/file-converter'
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const operation = formData.get('operation') as string
+    const conversionType = formData.get('conversionType') as string
     const files = formData.getAll('files') as File[]
 
     if (!files.length) {
@@ -14,77 +14,82 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let result
-    const contentType = 'application/pdf'
-    let filename = 'converted-file.pdf'
+    // For multiple file conversion, return download URLs
+    const downloadUrls: string[] = []
     
-    switch (operation) {
-      case 'word-to-pdf':
-        result = await FileConverter.wordToPDF(files[0])
-        filename = result.fileName || 'word-to-pdf.pdf'
-        break
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      let result
+      let contentType = 'application/pdf'
       
-      case 'images-to-pdf':
-        result = await FileConverter.imagesToPDF(files)
-        filename = result.fileName || 'images-to-pdf.pdf'
-        break
-      
-      case 'pdf-to-images':
-        const imageResult = await FileConverter.pdfToImages(files[0])
-        if (!imageResult.success) {
+      switch (conversionType) {
+        case 'pdf-to-word':
+          result = await FileConverter.extractText(file) // Simplified - extract text
+          contentType = 'text/plain'
+          break
+        
+        case 'pdf-to-excel':
+          result = await FileConverter.extractText(file) // Simplified - extract text
+          contentType = 'text/plain'
+          break
+        
+        case 'pdf-to-powerpoint':
+          result = await FileConverter.extractText(file) // Simplified - extract text
+          contentType = 'text/plain'
+          break
+        
+        case 'pdf-to-image':
+          result = await FileConverter.pdfToImages(file)
+          contentType = 'image/jpeg'
+          break
+        
+        case 'word-to-pdf':
+        case 'excel-to-pdf':
+        case 'powerpoint-to-pdf':
+          result = await FileConverter.wordToPDF(file) // Simplified - use word converter
+          break
+        
+        case 'image-to-pdf':
+          result = await FileConverter.imagesToPDF([file])
+          break
+        
+        default:
           return NextResponse.json(
-            { error: imageResult.error },
+            { error: 'Invalid conversion type' },
             { status: 400 }
           )
-        }
-        // Return images as JSON for now
-        return NextResponse.json({
-          success: true,
-          images: imageResult.images
-        })
-      
-      case 'extract-text':
-        const textResult = await FileConverter.extractText(files[0])
-        if (!textResult.success) {
-          return NextResponse.json(
-            { error: textResult.error },
-            { status: 400 }
-          )
-        }
-        return NextResponse.json({
-          success: true,
-          text: textResult.text,
-          fileName: files[0].name
-        })
-      
-      default:
+      }
+
+      if (!result || !result.success) {
         return NextResponse.json(
-          { error: 'Invalid operation' },
+          { error: result?.error || 'Conversion failed' },
           { status: 400 }
         )
+      }
+
+      // Create data URL for download
+      if ('data' in result && result.data) {
+        const dataUrl = `data:${contentType};base64,${Buffer.from(result.data).toString('base64')}`
+        downloadUrls.push(dataUrl)
+      } else if ('images' in result && result.images) {
+        // Handle image results
+        result.images.forEach((imageData: string) => {
+          downloadUrls.push(imageData)
+        })
+      } else if ('text' in result && result.text) {
+        // Handle text results
+        const textBlob = new TextEncoder().encode(result.text)
+        const dataUrl = `data:text/plain;base64,${Buffer.from(textBlob).toString('base64')}`
+        downloadUrls.push(dataUrl)
+      }
     }
 
-    if (!result || !result.success) {
-      return NextResponse.json(
-        { error: result?.error || 'Conversion failed' },
-        { status: 400 }
-      )
-    }
-
-    // Return the converted file as a downloadable file
-    const headers = new Headers()
-    headers.set('Content-Type', contentType)
-    headers.set('Content-Disposition', `attachment; filename="${filename}"`)
-    
-    return new NextResponse(result.data, {
-      status: 200,
-      headers
-    })
+    return NextResponse.json({ downloadUrls })
 
   } catch (error) {
-    console.error('File conversion error:', error)
+    console.error('Conversion error:', error)
     return NextResponse.json(
-      { error: 'Failed to convert file. Please try again.' },
+      { error: 'Failed to convert files. Please try again.' },
       { status: 500 }
     )
   }

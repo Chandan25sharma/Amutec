@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set up PDF.js worker
@@ -140,7 +140,7 @@ export class PDFProcessor {
             parseInt(color.slice(5, 7), 16) / 255
           ),
           opacity: opacity,
-          rotate: { angle: 45, type: 'degrees' }
+          rotate: degrees(45)
         })
       })
       
@@ -171,7 +171,7 @@ export class PDFProcessor {
       
       pagesToRotate.forEach(pageIndex => {
         if (pages[pageIndex]) {
-          pages[pageIndex].setRotation({ angle: rotation, type: 'degrees' })
+          pages[pageIndex].setRotation(degrees(rotation))
         }
       })
       

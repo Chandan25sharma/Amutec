@@ -2,7 +2,7 @@
 
 A comprehensive web application built with Next.js 15 that provides professional PDF editing tools, file conversion capabilities, and AI-powered resume analysis with career advice.
 
-## 🌟 Features
+##  Features
 
 ### Core PDF Tools
 - **Merge PDF**: Combine multiple PDF files into a single document
@@ -36,7 +36,7 @@ A comprehensive web application built with Next.js 15 that provides professional
 - **Batch Processing**: Process multiple PDFs at once
 - **Mobile Responsive**: Works seamlessly on all devices
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
 - **Authentication**: NextAuth.js with MongoDB adapter
@@ -47,7 +47,7 @@ A comprehensive web application built with Next.js 15 that provides professional
 - **UI Components**: Radix UI, Lucide React icons
 - **Deployment**: Vercel (serverless)
 
-## 📦 Installation
+## Installation
 
 1. **Clone the repository**
    ```bash
@@ -109,7 +109,7 @@ A comprehensive web application built with Next.js 15 that provides professional
 1. Get your API key from OpenAI platform
 2. Add it to your environment variables
 
-## 🎯 Usage
+## Usage
 
 ### For Guests (No Registration)
 - Upload PDFs and use all PDF tools
@@ -124,23 +124,6 @@ A comprehensive web application built with Next.js 15 that provides professional
 
 ## 🛠️ Development
 
-### Project Structure
-```
-src/
-├── app/
-│   ├── api/           # API routes
-│   ├── tools/         # Tool pages
-│   ├── auth/          # Authentication pages
-│   └── components/    # React components
-├── lib/
-│   ├── pdf-processor.ts    # PDF processing utilities
-│   ├── file-converter.ts   # File conversion utilities
-│   ├── resume-analyzer.ts  # AI resume analysis
-│   ├── auth.ts            # Authentication config
-│   └── utils.ts           # General utilities
-└── components/
-    └── ui/            # UI components
-```
 
 ### Available Scripts
 - `npm run dev` - Start development server
@@ -148,7 +131,7 @@ src/
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
-## 🚀 Deployment
+## Deployment
 
 ### Vercel (Recommended)
 1. Connect your GitHub repository to Vercel
@@ -159,14 +142,14 @@ src/
 1. Build the application: `npm run build`
 2. Start the server: `npm run start`
 
-## 🔒 Security & Privacy
+## Security & Privacy
 
 - **Client-side Processing**: PDF operations happen in your browser
 - **No File Storage**: Files are not permanently stored on servers
 - **Secure Authentication**: OAuth providers and NextAuth.js
 - **Encrypted Database**: MongoDB Atlas with SSL
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
@@ -188,9 +171,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [Link to docs]
+- **Documentation**:(https://github.com/Chandan25sharma/Amutec)
 - **Issues**: [GitHub Issues]
-- **Email**: support@amutec.com
+- **Email**: mrchandansharma25@gmail.com
 
 ---
 

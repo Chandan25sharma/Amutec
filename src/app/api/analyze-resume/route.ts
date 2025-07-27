@@ -5,19 +5,19 @@ import { FileConverter } from '@/lib/file-converter'
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File
-    const targetRole = formData.get('targetRole') as string
+    const resume = formData.get('resume') as File
+    const jobDescription = formData.get('jobDescription') as string || ''
 
-    if (!file) {
+    if (!resume) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'No resume file provided' },
         { status: 400 }
       )
     }
 
     // Validate file type
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-    if (!FileConverter.validateFileType(file, allowedTypes)) {
+    if (!FileConverter.validateFileType(resume, allowedTypes)) {
       return NextResponse.json(
         { error: 'Invalid file type. Please upload a PDF or Word document.' },
         { status: 400 }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Extract text from the resume
-    const textResult = await FileConverter.extractText(file)
+    const textResult = await FileConverter.extractText(resume)
     
     if (!textResult.success || !textResult.text) {
       return NextResponse.json(
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Analyze the resume using AI
     const analyzer = new ResumeAnalyzer(process.env.OPENAI_API_KEY)
-    const analysis = await analyzer.analyzeResume(textResult.text, targetRole || undefined)
+    const analysis = await analyzer.analyzeResume(textResult.text, jobDescription || undefined)
 
     return NextResponse.json({
       success: true,
