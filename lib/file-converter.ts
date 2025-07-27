@@ -158,7 +158,7 @@ export class FileConverter {
       if (file.type === 'application/pdf') {
         // Use PDF processor for PDF files
         const { PDFProcessor } = await import('./pdf-processor')
-        return await PDFProcessor.extractTextFromPDF(file)
+        return await PDFProcessor.extractTextFromPDF()
       } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
         const arrayBuffer = await file.arrayBuffer()
         const result = await mammoth.extractRawText({ arrayBuffer })
