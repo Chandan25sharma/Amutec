@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFProcessor } from '@/lib/pdf-processor'
+import { PDFDocument } from 'pdf-lib'
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const operation = request.headers.get('X-Operation') || formData.get('operation') as string
+    const operation = formData.get('operation') as string
     
     if (!operation) {
       return NextResponse.json(
@@ -13,18 +13,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let result
-    
+    // Validate PDF file function
+    const validatePDFFile = (file: File): boolean => {
+      return file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf')
+    }
+
+    // Check file size (50MB limit)
+    const checkFileSize = (file: File): boolean => {
+      const MAX_FILE_SIZE = 50 * 1024 * 1024
+      return file.size <= MAX_FILE_SIZE
+    }
+
+    let result: { success: boolean; data?: Uint8Array; error?: string }
+
     switch (operation) {
       case 'merge':
         const files = formData.getAll('files') as File[]
+        console.log('Merge request received, files:', files.length)
+        
         if (!files.length || files.length < 2) {
           return NextResponse.json(
             { error: 'At least 2 files required for merge' },
             { status: 400 }
           )
         }
-        result = await PDFProcessor.mergePDFs(files)
+
+        // Validate all files
+        for (const file of files) {
+          if (!validatePDFFile(file)) {
+            return NextResponse.json(
+              { error: 'All files must be PDFs' },
+              { status: 400 }
+            )
+          }
+          if (!checkFileSize(file)) {
+            return NextResponse.json(
+              { error: 'File size too large. Maximum 50MB per file.' },
+              { status: 400 }
+            )
+          }
+        }
+
+        result = await mergePDFs(files)
         break
       
       case 'split':
@@ -35,191 +65,59 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
+
+        if (!validatePDFFile(file)) {
+          return NextResponse.json(
+            { error: 'Invalid file type. Please upload a PDF file.' },
+            { status: 400 }
+          )
+        }
+
         const splitOption = formData.get('splitOption') as string
         const pageNumbers = formData.get('pageNumbers') as string
-        const ranges = formData.get('ranges') as string
         
         const splitRanges: { start: number; end: number }[] = []
+        
         if (splitOption === 'pages' && pageNumbers) {
-          // Convert page numbers to ranges
           const parts = pageNumbers.split(',').map(p => p.trim())
           for (const part of parts) {
             if (part.includes('-')) {
-              const [start, end] = part.split('-').map(n => parseInt(n))
-              splitRanges.push({ start, end })
-            } else {
-              const page = parseInt(part)
-              splitRanges.push({ start: page, end: page })
-            }
-          }
-        } else if (splitOption === 'ranges' && ranges) {
-          const rangeLines = ranges.split('\n').map(line => line.trim()).filter(Boolean)
-          for (const range of rangeLines) {
-            const [start, end] = range.split('-').map(n => parseInt(n))
-            splitRanges.push({ start, end })
-          }
-        }
-        
-        const splitResults = await PDFProcessor.splitPDF(file, splitRanges)
-        // Return URLs for download - in a real implementation, save to temp storage
-        return NextResponse.json({ 
-          downloadUrls: splitResults.map(result => 
-            result.success && result.data ? `data:application/pdf;base64,${Buffer.from(result.data).toString('base64')}` : null
-          ).filter(Boolean)
-        })
-      
-      case 'compress':
-        const compressFile = formData.get('file') as File
-        if (!compressFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        result = await PDFProcessor.compressPDF(compressFile)
-        break
-      
-      case 'rotate':
-        const rotateFile = formData.get('file') as File
-        if (!rotateFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const rotationAngle = parseInt(formData.get('rotationAngle') as string) || 90
-        const pageRange = formData.get('pageRange') as string
-        const specificPages = formData.get('specificPages') as string
-        
-        let pages: number[] | undefined
-        if (pageRange === 'specific' && specificPages) {
-          pages = []
-          const parts = specificPages.split(',').map(p => p.trim())
-          for (const part of parts) {
-            if (part.includes('-')) {
-              const [start, end] = part.split('-').map(n => parseInt(n))
-              for (let i = start; i <= end; i++) {
-                pages.push(i)
+              const [start, end] = part.split('-').map(n => parseInt(n.trim()))
+              if (!isNaN(start) && !isNaN(end) && start > 0 && end > 0) {
+                splitRanges.push({ start, end })
               }
             } else {
-              pages.push(parseInt(part))
+              const page = parseInt(part)
+              if (!isNaN(page) && page > 0) {
+                splitRanges.push({ start: page, end: page })
+              }
             }
           }
         }
+
+        if (splitRanges.length === 0) {
+          return NextResponse.json(
+            { error: 'No valid split ranges provided' },
+            { status: 400 }
+          )
+        }
+
+        const splitResults = await splitPDF(file, splitRanges)
         
-        result = await PDFProcessor.rotatePDF(rotateFile, rotationAngle, pages)
-        break
-      
-      case 'watermark':
-        const watermarkFile = formData.get('file') as File
-        if (!watermarkFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
+        // Return multiple files for download
+        const downloadUrls = splitResults
+          .map((result, index) => 
+            result.success && result.data 
+              ? `data:application/pdf;base64,${arrayBufferToBase64(result.data)}`
+              : null
           )
-        }
-        const watermarkText = formData.get('watermarkText') as string
-        const options = {
-          opacity: parseFloat(formData.get('opacity') as string) || 0.3,
-          fontSize: parseInt(formData.get('fontSize') as string) || 48,
-          color: formData.get('color') as string || '#000000'
-        }
-        result = await PDFProcessor.addWatermark(watermarkFile, watermarkText, options)
-        break
-      
-      case 'pageNumbers':
-        const pageNumFile = formData.get('file') as File
-        if (!pageNumFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const position = (formData.get('position') as 'bottom-center' | 'bottom-right' | 'bottom-left') || 'bottom-center'
-        const fontSize = parseInt(formData.get('fontSize') as string) || 12
-        result = await PDFProcessor.addPageNumbers(pageNumFile, { position, fontSize })
-        break
-      
-      case 'info':
-        const infoFile = formData.get('file') as File
-        if (!infoFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const info = await PDFProcessor.getPDFInfo(infoFile)
-        return NextResponse.json(info)
-      
-      case 'organize':
-        const organizeFile = formData.get('file') as File
-        if (!organizeFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const operations = JSON.parse(formData.get('operations') as string || '[]')
-        result = await PDFProcessor.organizePDF(organizeFile, operations)
-        break
-      
-      case 'analyze':
-        const analyzeFile = formData.get('file') as File
-        if (!analyzeFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const analysis = await PDFProcessor.analyzePDF(analyzeFile)
-        return NextResponse.json(analysis)
-      
-      case 'repair':
-        const repairFile = formData.get('file') as File
-        if (!repairFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        result = await PDFProcessor.repairPDF(repairFile)
-        break
-      
-      case 'security':
-        const securityFile = formData.get('file') as File
-        if (!securityFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const securitySettings = JSON.parse(formData.get('settings') as string || '{}')
-        result = await PDFProcessor.addSecurity(securityFile, securitySettings)
-        break
-      
-      case 'unlock':
-        const unlockFile = formData.get('file') as File
-        const password = formData.get('password') as string
-        if (!unlockFile || !password) {
-          return NextResponse.json(
-            { error: 'File and password are required' },
-            { status: 400 }
-          )
-        }
-        result = await PDFProcessor.unlockPDF(unlockFile, password)
-        break
-      
-      case 'annotate':
-        const annotateFile = formData.get('file') as File
-        if (!annotateFile) {
-          return NextResponse.json(
-            { error: 'File is required' },
-            { status: 400 }
-          )
-        }
-        const annotations = JSON.parse(formData.get('annotations') as string || '{}')
-        result = await PDFProcessor.annotatePDF(annotateFile, annotations)
-        break
+          .filter(Boolean) as string[]
+
+        return NextResponse.json({ 
+          success: true,
+          downloadUrls,
+          message: `Successfully split into ${downloadUrls.length} files`
+        })
       
       default:
         return NextResponse.json(
@@ -251,5 +149,74 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to process PDF. Please try again.' },
       { status: 500 }
     )
+  }
+}
+
+// Utility function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer: Uint8Array): string {
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
+// PDF Processing Functions
+async function mergePDFs(files: File[]): Promise<{ success: boolean; data?: Uint8Array; error?: string }> {
+  try {
+    const mergedPdf = await PDFDocument.create()
+    
+    for (const file of files) {
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await PDFDocument.load(arrayBuffer)
+      const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices())
+      pages.forEach(page => mergedPdf.addPage(page))
+    }
+    
+    const pdfBytes = await mergedPdf.save()
+    return { success: true, data: pdfBytes }
+  } catch (error) {
+    console.error('Merge error:', error)
+    return { success: false, error: 'Failed to merge PDFs' }
+  }
+}
+
+async function splitPDF(file: File, ranges: { start: number; end: number }[]): Promise<{ success: boolean; data?: Uint8Array; error?: string }[]> {
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const originalPdf = await PDFDocument.load(arrayBuffer)
+    const pageCount = originalPdf.getPageCount()
+    
+    const results = []
+    
+    for (const range of ranges) {
+      try {
+        // Validate range
+        if (range.start < 1 || range.end > pageCount || range.start > range.end) {
+          results.push({ success: false, error: `Invalid range: ${range.start}-${range.end}` })
+          continue
+        }
+        
+        const newPdf = await PDFDocument.create()
+        const pagesToCopy = []
+        
+        for (let i = range.start - 1; i < range.end; i++) {
+          pagesToCopy.push(i)
+        }
+        
+        const pages = await newPdf.copyPages(originalPdf, pagesToCopy)
+        pages.forEach(page => newPdf.addPage(page))
+        
+        const pdfBytes = await newPdf.save()
+        results.push({ success: true, data: pdfBytes })
+      } catch (error) {
+        results.push({ success: false, error: `Failed to split range ${range.start}-${range.end}` })
+      }
+    }
+    
+    return results
+  } catch (error) {
+    return [{ success: false, error: 'Failed to split PDF' }]
   }
 }
