@@ -71,7 +71,7 @@ export default function MergePage() {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
           console.log("Error response:", errorData);
-        } catch (e) {
+        } catch {
           console.log("Could not parse error response");
         }
         throw new Error(errorMessage);

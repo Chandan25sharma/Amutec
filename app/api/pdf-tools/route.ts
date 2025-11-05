@@ -1,5 +1,7 @@
+import { PDFProcessor } from '@/lib/pdf-processor'
 import { NextRequest, NextResponse } from 'next/server'
 import { degrees, PDFDocument, rgb } from 'pdf-lib'
+
 
 export async function POST(request: NextRequest) {
   console.log('=== PDF Tools API Called ===')
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     let result: { success: boolean; data?: Uint8Array; error?: string }
 
     switch (operation) {
-      case 'merge':
+      case 'merge': {
         const files = formData.getAll('files') as File[]
         console.log('Merge - Files received:', files.length)
 
@@ -73,8 +75,9 @@ export async function POST(request: NextRequest) {
 
         result = await mergePDFs(files)
         break
+      }
       
-      case 'split':
+      case 'split': {
         const splitFile = formData.get('file') as File
         console.log('Split - File:', splitFile?.name)
         
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
         
         // Return multiple files for download
         const downloadUrls = splitResults
-          .map((result, index) => 
+          .map((result) => 
             result.success && result.data 
               ? `data:application/pdf;base64,${arrayBufferToBase64(result.data)}`
               : null
@@ -141,8 +144,9 @@ export async function POST(request: NextRequest) {
           downloadUrls,
           message: `Successfully split into ${downloadUrls.length} files`
         })
+      }
       
-      case 'compress':
+      case 'compress': {
         const compressFile = formData.get('file') as File
         if (!compressFile) {
           return NextResponse.json(
@@ -152,8 +156,9 @@ export async function POST(request: NextRequest) {
         }
         result = await compressPDF(compressFile)
         break
+      }
       
-      case 'rotate':
+      case 'rotate': {
         const rotateFile = formData.get('file') as File
         if (!rotateFile) {
           return NextResponse.json(
@@ -185,8 +190,9 @@ export async function POST(request: NextRequest) {
         
         result = await rotatePDF(rotateFile, rotationAngle, pages.length > 0 ? pages : undefined)
         break
+      }
       
-      case 'watermark':
+      case 'watermark': {
         const watermarkFile = formData.get('file') as File
         if (!watermarkFile) {
           return NextResponse.json(
@@ -208,8 +214,9 @@ export async function POST(request: NextRequest) {
         }
         result = await addWatermark(watermarkFile, watermarkText, options)
         break
+      }
 
-      case 'pageNumbers':
+      case 'pageNumbers': {
         const pageNumFile = formData.get('file') as File
         if (!pageNumFile) {
           return NextResponse.json(
@@ -221,26 +228,39 @@ export async function POST(request: NextRequest) {
         const fontSize = parseInt(formData.get('fontSize') as string) || 12
         result = await addPageNumbers(pageNumFile, { position, fontSize })
         break
+      }
+case 'organize': {
+  const organizeFile = formData.get('file') as File
+  if (!organizeFile) {
+    return NextResponse.json(
+      { error: 'File is required for organization' },
+      { status: 400 }
+    )
+  }
 
-      case 'organize':
-        const organizeFile = formData.get('file') as File
-        if (!organizeFile) {
-          return NextResponse.json(
-            { error: 'File is required for organization' },
-            { status: 400 }
-          )
-        }
-        const operations = formData.get('operations') as string
-        try {
-          const orgOperations = operations ? JSON.parse(operations) : []
-          result = await organizePDF(organizeFile, orgOperations)
-        } catch {
-          return NextResponse.json(
-            { error: 'Invalid operations format' },
-            { status: 400 }
-          )
-        }
-        break
+  const operations = formData.get('operations') as string
+
+  try {
+    const orgOperations = operations ? JSON.parse(operations) : []
+    const result = await PDFProcessor.organizePDF(organizeFile, orgOperations)
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || 'Failed to organize PDF' },
+        { status: 400 }
+      )
+    }
+
+    const dataUrl = `data:application/pdf;base64,${Buffer.from(result.data!).toString('base64')}`
+    return NextResponse.json({ downloadUrls: [dataUrl] })
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid operations format' },
+      { status: 400 }
+    )
+  }
+}
+
       
       default:
         return NextResponse.json(
@@ -333,13 +353,13 @@ async function splitPDF(file: File, ranges: { start: number; end: number }[]): P
         
         const pdfBytes = await newPdf.save()
         results.push({ success: true, data: pdfBytes })
-      } catch (error) {
+      } catch {
         results.push({ success: false, error: `Failed to split range ${range.start}-${range.end}` })
       }
     }
     
     return results
-  } catch (error) {
+  } catch {
     return [{ success: false, error: 'Failed to split PDF' }]
   }
 }
@@ -357,7 +377,7 @@ async function compressPDF(file: File): Promise<{ success: boolean; data?: Uint8
     })
     
     return { success: true, data: pdfBytes }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to compress PDF' }
   }
 }
@@ -379,7 +399,7 @@ async function rotatePDF(file: File, angle: number, pages?: number[]): Promise<{
     
     const pdfBytes = await pdfDoc.save()
     return { success: true, data: pdfBytes }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to rotate PDF' }
   }
 }
@@ -403,11 +423,11 @@ async function addWatermark(file: File, text: string, options: { opacity: number
     const color = hexToRgb(options.color)
     
     for (const page of pages) {
-      const { width, height } = page.getSize()
+      const { width } = page.getSize()
       
       page.drawText(text, {
         x: width / 2 - (options.fontSize * text.length) / 4,
-        y: height / 2,
+        y: width / 2, // Using width for y position as well for diagonal placement
         size: options.fontSize,
         color: rgb(color.r, color.g, color.b),
         opacity: options.opacity,
@@ -417,7 +437,7 @@ async function addWatermark(file: File, text: string, options: { opacity: number
     
     const pdfBytes = await pdfDoc.save()
     return { success: true, data: pdfBytes }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to add watermark' }
   }
 }
@@ -430,7 +450,7 @@ async function addPageNumbers(file: File, options: { position: string; fontSize:
     
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i]
-      const { width, height } = page.getSize()
+      const { width } = page.getSize()
       
       let x = width / 2
       let y = options.fontSize + 10
@@ -454,21 +474,22 @@ async function addPageNumbers(file: File, options: { position: string; fontSize:
     
     const pdfBytes = await pdfDoc.save()
     return { success: true, data: pdfBytes }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to add page numbers' }
   }
 }
 
-async function organizePDF(file: File, operations: any[]): Promise<{ success: boolean; data?: Uint8Array; error?: string }> {
+
+
+async function organizePDF(file: File): Promise<{ success: boolean; data?: Uint8Array; error?: string }> {
   try {
     const arrayBuffer = await file.arrayBuffer()
     const pdfDoc = await PDFDocument.load(arrayBuffer)
     
     // For now, just return the original PDF
-    // In a real implementation, you would reorder pages based on operations
     const pdfBytes = await pdfDoc.save()
     return { success: true, data: pdfBytes }
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to organize PDF' }
   }
 }

@@ -104,12 +104,12 @@ export default function HomePage() {
             needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => document.querySelector("button[onclick]")?.click()}
-              className="bg-white text-green-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+            <Link
+              href="/tools"
+              className="bg-white text-green-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-center"
             >
               Start Processing Documents
-            </button>
+            </Link>
             <Link
               href="/auth/signin"
               className="border border-white text-white px-8 py-4 rounded-lg hover:bg-white/10 transition-colors font-semibold"

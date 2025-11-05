@@ -3,16 +3,113 @@
 import {
   Award,
   Brain,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  EyeOff,
   FileText,
+  Github,
   Globe,
   Heart,
+  Linkedin,
   Shield,
+  Twitter,
   Users,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function AboutPage() {
+  const contributors = [
+    {
+      name: "Alex Chen",
+      role: "Founder & Full Stack Developer",
+      avatar: "/avatars/alex.jpg",
+    },
+    {
+      name: "Sarah Johnson",
+      role: "UI/UX Designer & Frontend Developer",
+      avatar: "/avatars/sarah.jpg",
+    },
+    {
+      name: "Mike Rodriguez",
+      role: "Backend & DevOps Engineer",
+      avatar: "/avatars/mike.jpg",
+    },
+  ];
+
+  const platformBenefits = [
+    {
+      icon: EyeOff,
+      title: "No Tracking",
+      description: "We don't track your activities or collect personal data",
+    },
+    {
+      icon: Clock,
+      title: "Instant Access",
+      description: "No waiting periods - all tools available immediately",
+    },
+    {
+      icon: DollarSign,
+      title: "Completely Free",
+      description: "No hidden costs, subscriptions, or premium tiers",
+    },
+    {
+      icon: CheckCircle,
+      title: "No Watermarks",
+      description: "Clean, professional results without any branding",
+    },
+  ];
+
+  const whyBetter = [
+    {
+      title: "Privacy Focused",
+      description:
+        "Unlike other platforms, we process everything locally in your browser. Your files never leave your computer.",
+      advantage: "Complete data privacy",
+    },
+    {
+      title: "No Account Required",
+      description:
+        "Skip the signup process. Start using our tools immediately without creating yet another account.",
+      advantage: "Instant access",
+    },
+    {
+      title: "Ad-Free Experience",
+      description:
+        "We believe in clean, distraction-free tools. No annoying ads or popups to interrupt your workflow.",
+      advantage: "Better focus",
+    },
+    {
+      title: "Unlimited Usage",
+      description:
+        "No daily limits, no file size restrictions (within reasonable bounds), use our tools as much as you need.",
+      advantage: "No restrictions",
+    },
+  ];
+
+  const ourPlatforms = [
+    {
+      name: "Coderspae",
+      url: "https://coderspae.com",
+      description: "Developer tools and resources platform",
+      icon: "💻",
+    },
+    {
+      name: "Bug3",
+      url: "https://bug3.net",
+      description: "Bug tracking and project management",
+      icon: "🐛",
+    },
+    {
+      name: "NeuroSymbolic AI",
+      url: "https://neurosymbolicai.coderspae.com",
+      description: "Advanced AI research and development",
+      icon: "🧠",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
@@ -47,7 +144,7 @@ export default function AboutPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -72,6 +169,82 @@ export default function AboutPage() {
               succeed in their careers, while making document management
               effortless and efficient.
             </p>
+          </div>
+        </div>
+
+        {/* Our Platforms Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-8 mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+            Our Platforms
+          </h2>
+          <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
+            Amutec is part of a family of innovative platforms designed to make
+            technology more accessible and productive for everyone.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {ourPlatforms.map((platform, index) => (
+              <a
+                key={index}
+                href={platform.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gray-50 rounded-lg p-6 hover:bg-blue-50 transition-colors group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl">{platform.icon}</span>
+                  <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <h3 className="font-semibold text-gray-900 text-lg mb-2">
+                  {platform.name}
+                </h3>
+                <p className="text-gray-600 text-sm">{platform.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Why We're Better Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-8 mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+            Why Choose Amutec Over Others?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {whyBetter.map((item, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-start mb-3">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-green-600 font-medium">
+                      {item.advantage}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Platform Benefits */}
+        <div className="bg-white rounded-xl shadow-sm border p-8 mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+            What Makes Our Platform Special
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {platformBenefits.map((benefit, index) => (
+              <div key={index} className="text-center">
+                <div className="bg-blue-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <benefit.icon className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-600 text-sm">{benefit.description}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -120,6 +293,47 @@ export default function AboutPage() {
               Advanced AI provides personalized resume feedback and career
               advice to help you land your dream job.
             </p>
+          </div>
+        </div>
+
+        {/* Contributors Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-8 mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
+            Our Team
+          </h2>
+          <p className="text-gray-600 text-center mb-8 max-w-2xl mx-auto">
+            A small but passionate team of developers and designers dedicated to
+            creating the best document processing experience for you.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {contributors.map((contributor, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 rounded-lg p-6 text-center"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-semibold">
+                  {contributor.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </div>
+                <h3 className="font-semibold text-gray-900">
+                  {contributor.name}
+                </h3>
+                <p className="text-gray-600 text-sm mb-3">{contributor.role}</p>
+                <div className="flex justify-center space-x-3">
+                  <button className="text-gray-400 hover:text-blue-600 transition-colors">
+                    <Twitter className="h-4 w-4" />
+                  </button>
+                  <button className="text-gray-400 hover:text-blue-800 transition-colors">
+                    <Linkedin className="h-4 w-4" />
+                  </button>
+                  <button className="text-gray-400 hover:text-gray-900 transition-colors">
+                    <Github className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

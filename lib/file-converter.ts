@@ -1,5 +1,5 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import mammoth from 'mammoth'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
 export interface ConversionResult {
   success: boolean
@@ -125,28 +125,32 @@ export class FileConverter {
     }
   }
 
-  // Convert PDF to images (returns base64 data URLs)
-  static async pdfToImages(_file: File): Promise<{
-    success: boolean
-    images?: string[]
-    error?: string
-  }> {
-    try {
-      // This would require a PDF to image conversion library
-      // For now, we'll return a placeholder implementation
-      // In a real implementation, you'd use libraries like pdf2pic or PDF-lib with canvas rendering
-      
-      return {
-        success: false,
-        error: 'PDF to image conversion requires additional setup with canvas rendering libraries'
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to convert PDF to images'
-      }
-    }
+ static async pdfToImages(file: File): Promise<{
+  success: boolean
+  images?: string[]
+  error?: string
+}> {
+  try {
+    // Placeholder logic: you can later integrate actual conversion using `pdf2pic`, `pdfjs-dist`, etc.
+    console.log("Received file for PDF→Image conversion:", file.name);
+
+    // For now, return a mock response
+    return {
+      success: false,
+      error:
+        'PDF to image conversion requires additional setup (canvas or pdf2pic library).',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unexpected error during PDF to image conversion.',
+    };
   }
+}
+
 
   // Extract text from various file formats
   static async extractText(file: File): Promise<{

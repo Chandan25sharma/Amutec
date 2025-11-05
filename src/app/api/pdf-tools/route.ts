@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         
         // Return multiple files for download
         const downloadUrls = splitResults
-          .map((result, index) => 
+          .map((result) => 
             result.success && result.data 
               ? `data:application/pdf;base64,${arrayBufferToBase64(result.data)}`
               : null
@@ -182,41 +182,50 @@ async function mergePDFs(files: File[]): Promise<{ success: boolean; data?: Uint
   }
 }
 
-async function splitPDF(file: File, ranges: { start: number; end: number }[]): Promise<{ success: boolean; data?: Uint8Array; error?: string }[]> {
+async function splitPDF(
+  file: File,
+  ranges: { start: number; end: number }[]
+): Promise<{ success: boolean; data?: Uint8Array; error?: string }[]> {
   try {
-    const arrayBuffer = await file.arrayBuffer()
-    const originalPdf = await PDFDocument.load(arrayBuffer)
-    const pageCount = originalPdf.getPageCount()
-    
-    const results = []
-    
+    const arrayBuffer = await file.arrayBuffer();
+    const originalPdf = await PDFDocument.load(arrayBuffer);
+    const pageCount = originalPdf.getPageCount();
+
+    const results: { success: boolean; data?: Uint8Array; error?: string }[] = [];
+
     for (const range of ranges) {
       try {
-        // Validate range
         if (range.start < 1 || range.end > pageCount || range.start > range.end) {
-          results.push({ success: false, error: `Invalid range: ${range.start}-${range.end}` })
-          continue
+          results.push({
+            success: false,
+            error: `Invalid range: ${range.start}-${range.end}`,
+          });
+          continue;
         }
-        
-        const newPdf = await PDFDocument.create()
-        const pagesToCopy = []
-        
-        for (let i = range.start - 1; i < range.end; i++) {
-          pagesToCopy.push(i)
-        }
-        
-        const pages = await newPdf.copyPages(originalPdf, pagesToCopy)
-        pages.forEach(page => newPdf.addPage(page))
-        
-        const pdfBytes = await newPdf.save()
-        results.push({ success: true, data: pdfBytes })
-      } catch (error) {
-        results.push({ success: false, error: `Failed to split range ${range.start}-${range.end}` })
+
+        const newPdf = await PDFDocument.create();
+        const pagesToCopy = Array.from(
+          { length: range.end - range.start + 1 },
+          (_, i) => i + range.start - 1
+        );
+
+        const pages = await newPdf.copyPages(originalPdf, pagesToCopy);
+        pages.forEach((page) => newPdf.addPage(page));
+
+        const pdfBytes = await newPdf.save();
+        results.push({ success: true, data: pdfBytes });
+      } catch (err) {
+        console.error("Split range error:", err);
+        results.push({
+          success: false,
+          error: `Failed to split range ${range.start}-${range.end}`,
+        });
       }
     }
-    
-    return results
+
+    return results;
   } catch (error) {
-    return [{ success: false, error: 'Failed to split PDF' }]
+    console.error("PDF splitting failed:", error);
+    return [{ success: false, error: "Failed to split PDF" }];
   }
 }
