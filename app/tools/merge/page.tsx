@@ -44,46 +44,43 @@ export default function MergePage() {
     setDownloadUrl(null);
 
     try {
-      console.log(
-        "Starting merge with files:",
-        files.map((f) => f.name)
-      );
-
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("files", file);
-        console.log("Added file to formData:", file.name, file.size, file.type);
+      // Convert files to base64 and send as JSON
+      const filePromises = files.map(async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            ""
+          )
+        );
+        return {
+          name: file.name,
+          data: base64,
+          size: file.size,
+        };
       });
-      formData.append("operation", "merge");
-      console.log("FormData operation:", formData.get("operation"));
+
+      const fileData = await Promise.all(filePromises);
 
       const response = await fetch("/api/pdf-tools", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          operation: "merge",
+          files: fileData,
+        }),
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response ok:", response.ok);
-
       if (!response.ok) {
-        let errorMessage = "Failed to merge PDFs";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          console.log("Error response:", errorData);
-        } catch {
-          console.log("Could not parse error response");
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to merge PDFs");
       }
 
-      console.log("Merge successful, getting blob...");
-      const blob = await response.blob();
-      console.log("Blob received:", blob.size, blob.type);
-
-      const url = URL.createObjectURL(blob);
+      const result = await response.blob();
+      const url = URL.createObjectURL(result);
       setDownloadUrl(url);
-      console.log("Download URL created");
     } catch (err) {
       console.error("Merge error:", err);
       setError(err instanceof Error ? err.message : "Failed to merge PDFs");

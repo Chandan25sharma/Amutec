@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { degrees, PDFDocument, rgb } from 'pdf-lib'
 
 
+
 export async function POST(request: NextRequest) {
   console.log('=== PDF Tools API Called ===')
   
@@ -10,14 +11,29 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get('content-type') || ''
     console.log('Content-Type:', contentType)
     
-    if (!contentType.includes('multipart/form-data')) {
+    let formData: FormData;
+    
+    // Handle both multipart/form-data and JSON requests
+    if (contentType.includes('multipart/form-data')) {
+      formData = await request.formData()
+    } else if (contentType.includes('application/json')) {
+      // If it's JSON, we can't process it as FormData for file uploads
       return NextResponse.json(
-        { error: 'Invalid content type. Expected multipart/form-data' },
+        { error: 'JSON requests not supported for file operations. Use multipart/form-data.' },
         { status: 400 }
       )
+    } else {
+      // For other content types, try to parse as FormData anyway
+      try {
+        formData = await request.formData()
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid content type. Expected multipart/form-data' },
+          { status: 400 }
+        )
+      }
     }
 
-    const formData = await request.formData()
     console.log('FormData entries:', Array.from(formData.entries()).map(([key, value]) => 
       [key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value]
     ))
@@ -31,6 +47,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // ... rest of your existing code remains the same
 
     // Validate PDF file function
     const validatePDFFile = (file: File): boolean => {
